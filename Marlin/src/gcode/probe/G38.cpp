@@ -31,7 +31,6 @@
 #include "../../module/stepper.h"
 #include "../../module/probe.h"
 
-bool skip_multiple_probing = false;
 
 inline void G38_single_probe(const uint8_t move_value) {
   endstops.enable(true);
@@ -134,9 +133,8 @@ void GcodeSuite::G38(const int8_t subcode) {
   LOOP_XYZ(i)
     if (ABS(destination[i] - current_position[i]) >= G38_MINIMUM_MOVE) {
       if (!parser.seenval('F')) feedrate_mm_s = homing_feedrate((AxisEnum)i);
-      if (parser.seen('P')) skip_multiple_probing = true; // PnP thingy
       // If G38.2 fails throw an error
-      if (!G38_run_probe(skip_multiple_probing) && error_on_fail) SERIAL_ERROR_MSG("Failed to reach target");
+      if (!G38_run_probe(parser.boolval('P')) && error_on_fail) SERIAL_ERROR_MSG("Failed to reach target");
       break;
     }
 
