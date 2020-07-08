@@ -102,6 +102,17 @@
   #define CHAMBER_BETA                 3950    // Beta value
 #endif
 
+/**
+ * Extruder 1 Override
+ * Use temp sensor 1 as an alternate scale for sensor 0
+ * Also for alternate steps per unit (Bowden C axis)
+ * Primarily for PnP and to read pressure for vacuum nozzle
+ */
+#define EXT1_ALT_SCALE
+#if ENABLED(EXT1_ALT_SCALE)
+  #include "extruder1_overrides.h"
+#endif
+
 //
 // Hephestos 2 24V heated bed upgrade kit.
 // https://store.bq.com/en/heated-bed-kit-hephestos2

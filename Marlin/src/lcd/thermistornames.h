@@ -131,4 +131,8 @@
 #elif THERMISTOR_ID == 1000
   #define THERMISTOR_NAME "Custom"
 
+//Extra for PnP
+#elif THERMISTOR_ID == 1013
+  #define THERMISTOR_NAME "MXP Pressure Sensor"
+
 #endif // THERMISTOR_ID
