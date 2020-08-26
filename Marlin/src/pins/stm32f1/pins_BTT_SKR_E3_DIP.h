@@ -55,8 +55,8 @@
 //
 // Z Probe must be this pin
 //
-#define Z_MIN_PROBE_PIN                     PC14  // "PROBE"
-
+//#define Z_MIN_PROBE_PIN                     PC14  // "PROBE"
+#define Z_MIN_PROBE_PIN                     Z_STOP_PIN // just try to override
 //
 // Filament Runout Sensor
 //
