@@ -238,20 +238,32 @@ xyz_pos_t Probe::offset; // Initialized by settings.load()
 
 #if QUIET_PROBING
 
-  void Probe::set_probing_paused(const bool p) {
-    TERN_(PROBING_HEATERS_OFF, thermalManager.pause(p));
-    TERN_(PROBING_FANS_OFF, thermalManager.set_fans_paused(p));
+  #ifndef DELAY_BEFORE_PROBING
+    #define DELAY_BEFORE_PROBING 25
+  #endif
+
+  void Probe::set_probing_paused(const bool dopause) {
+    TERN_(PROBING_HEATERS_OFF, thermalManager.pause(dopause));
+    TERN_(PROBING_FANS_OFF, thermalManager.set_fans_paused(dopause));
     #if ENABLED(PROBING_STEPPERS_OFF)
-      disable_e_steppers();
-      #if NONE(DELTA, HOME_AFTER_DEACTIVATE)
-        DISABLE_AXIS_X(); DISABLE_AXIS_Y();
-      #endif
+      IF_DISABLED(DELTA, static uint8_t old_known);
+      if (dopause) {
+        #if DISABLED(DELTA)
+          old_known = axis_known_position;
+          DISABLE_AXIS_X();
+          DISABLE_AXIS_Y();
+        #endif
+        disable_e_steppers();
+      }
+      else {
+        #if DISABLED(DELTA)
+          if (TEST(old_known, X_AXIS)) ENABLE_AXIS_X();
+          if (TEST(old_known, Y_AXIS)) ENABLE_AXIS_Y();
+        #endif
+        axis_known_position = old_trusted;
+      }
     #endif
-    if (p) safe_delay(25
-      #if DELAY_BEFORE_PROBING > 25
-        - 25 + DELAY_BEFORE_PROBING
-      #endif
-    );
+    if (dopause) safe_delay(_MAX(DELAY_BEFORE_PROBING, 25));
   }
 
 #endif // QUIET_PROBING
@@ -270,7 +282,13 @@ FORCE_INLINE void probe_specific_action(const bool deploy) {
   #if ENABLED(PAUSE_BEFORE_DEPLOY_STOW)
     do {
       #if ENABLED(PAUSE_PROBE_DEPLOY_WHEN_TRIGGERED)
-        if (deploy == (READ(Z_MIN_PROBE_PIN) == Z_MIN_PROBE_ENDSTOP_INVERTING)) break;
+        if (deploy == (
+          #if HAS_CUSTOM_PROBE_PIN
+            READ(Z_MIN_PROBE_PIN) == Z_MIN_PROBE_ENDSTOP_INVERTING
+          #else
+            READ(Z_MIN_PIN) == Z_MIN_ENDSTOP_INVERTING
+          #endif
+        )) break;
       #endif
 
       BUZZ(100, 659);
@@ -359,7 +377,7 @@ bool Probe::set_deployed(const bool deploy) {
     do_z_raise(_MAX(Z_CLEARANCE_BETWEEN_PROBES, Z_CLEARANCE_DEPLOY_PROBE));
 
   #if EITHER(Z_PROBE_SLED, Z_PROBE_ALLEN_KEY)
-    if (axis_unhomed_error(TERN_(Z_PROBE_SLED, _BV(X_AXIS)))) {
+    if (homing_needed_error(TERN_(Z_PROBE_SLED, _BV(X_AXIS)))) {
       SERIAL_ERROR_MSG(STR_STOP_UNHOMED);
       stop();
       return true;
@@ -723,7 +741,6 @@ float Probe::probe_at_point(const float &rx, const float &ry, const ProbePtRaise
      * when starting up the machine or rebooting the board.
      * There's no way to know where the nozzle is positioned until
      * homing has been done - no homing with z-probe without init!
-     *
      */
     STOW_Z_SERVO();
   }
