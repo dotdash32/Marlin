@@ -202,7 +202,7 @@
 #if ENABLED(SWITCHING_NOZZLE)
   #define SWITCHING_NOZZLE_SERVO_NR 0
   //#define SWITCHING_NOZZLE_E1_SERVO_NR 1          // If two servos are used, the index of the second
-  #define SWITCHING_NOZZLE_SERVO_ANGLES { 130, 70 }   // Angles for E0, E1 (single servo) or lowered/raised (dual servo)
+  #define SWITCHING_NOZZLE_SERVO_ANGLES { 108, 69 }   // Angles for E0, E1 (single servo) or lowered/raised (dual servo)
 #endif
 
 /**
