@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (c) 2021 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (c) 2020 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
@@ -16,17 +16,18 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 #pragma once
 
-#if NOT_TARGET(__AVR_ATmega2560__)
-  #if DISABLED(ALLOW_MEGA1280)
-    #error "Oops! Select 'Arduino/Genuino Mega or Mega 2560' in 'Tools > Board.'"
-  #elif NOT_TARGET(__AVR_ATmega1280__)
-    #error "Oops! Select 'Arduino/Genuino Mega or Mega 2560 or 1280' in 'Tools > Board.'"
-  #endif
-#endif
 
-#undef ALLOW_MEGA1280
+//Redefine E1 pins as E0
+#define E1_ENABLE_PIN   E0_ENABLE_PIN
+#define E1_STEP_PIN     E0_STEP_PIN
+#define E1_DIR_PIN      E0_DIR_PIN
+#ifndef E1_CS_PIN
+  #define E0_CS_PIN     E0_CS_PIN
+#endif
+#define TEMP_1_PIN      TEMP_0_PIN   // Analog Input "TH0"
+#define HEATER_1_PIN    HEATER_0_PIN   // HE

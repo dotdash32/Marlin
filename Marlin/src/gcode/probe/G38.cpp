@@ -31,6 +31,7 @@
 #include "../../module/stepper.h"
 #include "../../module/probe.h"
 
+
 inline void G38_single_probe(const uint8_t move_value) {
   endstops.enable(true);
   G38_move = move_value;
@@ -42,7 +43,7 @@ inline void G38_single_probe(const uint8_t move_value) {
   sync_plan_position();
 }
 
-inline bool G38_run_probe() {
+inline bool G38_run_probe(bool skip_multiple_probing) {
 
   bool G38_pass_fail = false;
 
@@ -53,6 +54,7 @@ inline bool G38_run_probe() {
       const float dist = destination[i] - current_position[i];
       retract_mm[i] = ABS(dist) < G38_MINIMUM_MOVE ? 0 : home_bump_mm((AxisEnum)i) * (dist > 0 ? -1 : 1);
     }
+  }
   #endif
 
   planner.synchronize();  // wait until the machine is idle
@@ -66,6 +68,9 @@ inline bool G38_run_probe() {
 
   G38_did_trigger = false;
 
+  //Debugging
+  SERIAL_ECHOPAIR("move_value = ", move_value);
+
   // Move until destination reached or target hit
   G38_single_probe(move_value);
 
@@ -74,6 +79,8 @@ inline bool G38_run_probe() {
     G38_pass_fail = true;
 
     #if MULTIPLE_PROBING > 1
+
+    if(!skip_multiple_probing) {
       // Move away by the retract distance
       destination = current_position + retract_mm;
       endstops.enable(false);
@@ -86,6 +93,7 @@ inline bool G38_run_probe() {
       destination -= retract_mm * 2;
 
       G38_single_probe(move_value);
+    }
     #endif
   }
 
@@ -109,6 +117,8 @@ void GcodeSuite::G38(const int8_t subcode) {
   get_destination_from_command();
 
   remember_feedrate_scaling_off();
+  SERIAL_ECHOLNPGM("G38 Probing");
+
 
   const bool error_on_fail =
     #if ENABLED(G38_PROBE_AWAY)
@@ -123,7 +133,7 @@ void GcodeSuite::G38(const int8_t subcode) {
     if (ABS(destination[i] - current_position[i]) >= G38_MINIMUM_MOVE) {
       if (!parser.seenval('F')) feedrate_mm_s = homing_feedrate((AxisEnum)i);
       // If G38.2 fails throw an error
-      if (!G38_run_probe() && error_on_fail) SERIAL_ERROR_MSG("Failed to reach target");
+      if (!G38_run_probe(parser.boolval('P')) && error_on_fail) SERIAL_ERROR_MSG("Failed to reach target");
       break;
     }
 
