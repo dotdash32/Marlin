@@ -334,6 +334,10 @@ public:
     static void resume_print();
     static void flow_fault();
 
+    #if BOTH(PSU_CONTROL, PS_OFF_CONFIRM)
+      static void poweroff();
+    #endif
+
     #if HAS_WIRED_LCD
 
       static millis_t next_button_update_ms;
@@ -525,11 +529,26 @@ public:
 
     static void draw_select_screen_prompt(PGM_P const pref, const char * const string=nullptr, PGM_P const suff=nullptr);
 
-  #elif HAS_WIRED_LCD
+  #else
 
     static constexpr bool on_status_screen() { return true; }
-    FORCE_INLINE static void run_current_screen() { status_screen(); }
 
+    #if HAS_WIRED_LCD
+      FORCE_INLINE static void run_current_screen() { status_screen(); }
+    #endif
+
+  #endif
+
+  #if EITHER(HAS_LCD_MENU, EXTENSIBLE_UI)
+    static bool lcd_clicked;
+    static inline bool use_click() {
+      const bool click = lcd_clicked;
+      lcd_clicked = false;
+      return click;
+    }
+  #else
+    static constexpr bool lcd_clicked = false;
+    static inline bool use_click() { return false; }
   #endif
 
   #if EITHER(HAS_LCD_MENU, EXTENSIBLE_UI)
